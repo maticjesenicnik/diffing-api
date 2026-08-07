@@ -16,7 +16,36 @@ public static class ByteDiffer
             return DiffResult.SizeMismatch();
         }
 
-        // Temporary implementation before creating the method for checking differing segments
-        return left.AsSpan().SequenceEqual(right) ? DiffResult.Equal() : DiffResult.ContentMismatch([]);
+        var segments = FindDifferingSegments(left, right);
+        
+        return segments.Count == 0 ? DiffResult.Equal() : DiffResult.ContentMismatch(segments);
+    }
+    
+    /// <summary>
+    /// Finds all contiguous segments where <paramref name="left"/> and <paramref name="right"/> differ.
+    /// </summary>
+    private static List<DiffSegment> FindDifferingSegments(byte[] left, byte[] right)
+    {
+        var segments = new List<DiffSegment>();
+        var index = 0;
+
+        while (index < left.Length)
+        {
+            if (left[index] == right[index])
+            {
+                index++;
+                continue;
+            }
+
+            var runStart = index;
+            while (index < left.Length && left[index] != right[index])
+            {
+                index++;
+            }
+
+            segments.Add(new DiffSegment(runStart, index - runStart));
+        }
+
+        return segments;
     }
 }
